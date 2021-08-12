@@ -6,6 +6,7 @@ window.onload = function(){
   const id = document.querySelector("#id");
   const alterar = document.querySelector("#alterar");
   const deletar = document.querySelector("#deletar");
+  const buscarQrCode = document.querySelector("#buscarQrCode");
 
   //ação de cadastrar uma pessoa e curso
   cadastrar.addEventListener("click", function(){
@@ -71,9 +72,63 @@ window.onload = function(){
     });
   });
 
+  //metodo para bucar por QrCode
+  buscarQrCode.addEventListener("click", function(){
+    cordova.plugins.barcodeScanner.scan(
+      function(result){
+        var cancelado = result.cancelled;
+
+        if(cancelado === false){
+          id.value = result.text;
+
+          fetch(`https://www.jussimarleal.com.br/exemplo_api/pessoa/${id.value}`,{
+            method: "get",
+            mode: "cors",
+            cache: "default"
+          }).then(response=>{
+            response.json().then(data=>{
+              nome.value = data['nome'];
+              curso.value = data['curso'];
+            });
+          });
+        };
+      },
+      function(error){
+        alert("O escaneamento falhou: " + error);
+      },
+      {
+        preferFrontCamera : false,
+        showFlipCameraButton : true,
+        showTorchButton : true,
+        torchOn: false,
+        saveHistory: true,
+        prompt : "Aponte a um Código de barras ou QR Code",
+        resultDisplayDuration: 500,
+        formats : "default",
+        orientation : "default",
+        disableAnimations : true,
+        disableSuccessBeep: false 
+      }
+    );
+  });
+
   //metodo para limpar os campos
   function limparCampos(){
     nome.value = "";
     curso.value = "";
   }
+
+  //metodo(s) para checar a conexão
+  document.addEventListener("offline", onOffline, false);
+
+  function confirma(buttonIndex){
+    if(buttonIndex == 1){
+      navigator.app.exitApp();
+    }
+  }
+  
+  function onOffline(){
+    navigator.notification.confirm("Para usar esse app você precisa estar conectado à internet",confirma,"Aviso",['Sair','Ok']);
+  }
+
 }
